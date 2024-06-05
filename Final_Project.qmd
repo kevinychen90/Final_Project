@@ -1,15 +1,40 @@
 ---
 title: "HRP203 Final Project"
+subtitle: "Analysis of Hospitalization Costs for Smokers"
+author: Kevin Chen
+date: June 10, 2024
 format: pdf
 editor: visual
 execute: 
   echo: false
 ---
 
-## Title
+## Github
 
-This project can be found at this Github link.
+This project can be found at this Github [link](https://github.com/kevinychen90/Final_Project.git)
+
+## Introduction
+
+## Methods
 
 ```{r}
-1 + 1
+#| include: false
+
+#Load libraries
+library(dplyr)
+library(ggplot2)
+
+#Load dataset
+data <- read.csv("raw-data/cohort.csv")
+
 ```
+
+methods section with notation
+
+## Results
+
+results section with data summary table and at least 2 figures
+
+## Discussion
+
+4-6 pages total
