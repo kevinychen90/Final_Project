@@ -1,0 +1,15 @@
+---
+title: "HRP203 Final Project"
+format: pdf
+editor: visual
+execute: 
+  echo: false
+---
+
+## Title
+
+This project can be found at this Github link.
+
+```{r}
+1 + 1
+```
