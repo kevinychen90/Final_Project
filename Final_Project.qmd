@@ -1,7 +1,7 @@
 ---
 title: "HRP203 Final Project"
 subtitle: "Analysis of Hospitalization Costs for Smokers"
-author: Kevin Chen
+author: Kevin Chen, DO
 date: June 10, 2024
 format: pdf
 editor: visual
@@ -23,7 +23,24 @@ There is a signficant economic cost and burden for this patient population due t
 
 *Setting and Data Collection*
 
-A data set containing a patient-level data from a single community hospital in San Francisco, CA was obtained. All patients admitted to the internal medicine hospitalist team between January 2023 to December 2023 were included. The data set included an individual's smoking status, gender, age, presence of cardiac conditions on admission and total hospitalization cost. The key variables were:  - `smoke`: Smoking status (0 = Non-smoker, 1 = Smoker) - `female`: Gender (0 = Male, 1 = Female) - `age`: Age of the individual - `cardiac`: History of cardiac events (0 = No, 1 = Yes) - `cost`: Medical costs for hospitalizations
+A data set containing a patient-level data from a single community hospital in San Francisco, CA was obtained. All patients admitted to the internal medicine hospitalist team between January 2023 to December 2023 were included. The data set included an individual's smoking status, gender, age, presence of cardiac conditions on admission and total hospitalization cost. The key variables were: - `smoke`: Smoking status (0 = Non-smoker, 1 = Smoker) - `female`: Gender (0 = Male, 1 = Female) - `age`: Age of the individual - `cardiac`: History of cardiac events (0 = No, 1 = Yes) - `cost`: Medical costs for hospitalizations
+
+*Statistical Analysis*
+
+We employed a statistical regression analysis to study the relationship between smoking status and hospitalization costs. We controlled for age, gender and history of cardiac disease prior to admission. The regression model used was as follows:
+
+$$
+Cost = \hat{\beta}_0 + \hat{\beta}_1 \cdot smoke + \hat{\beta}_2 \cdot age+ \hat{\beta}_3 \cdot female+ \hat{\beta}_4 \cdot cardiac +\epsilon
+$$
+
+Where:
+
+-   $\hat{\beta}_0$ is the intercept of the regression model.
+-   $\hat{\beta}_1$ represents the effect of smoking status on total hospitalization costs.
+-   $\hat{\beta}_2$ represents the effect of age on total hospitalization costs.
+-   $\hat{\beta}_3$ represents the effect of gender on total hospitalization costs.
+-   $\hat{\beta}_4$ represents the effect of history of cardiac disease prior to admission on total hospitalization costs.
+-   $\epsilon$ is the error term.
 
 ```{r}
 #| include: false
@@ -52,13 +69,13 @@ label(data$cost) <- "Cost"
 
 ```
 
-The summary table shows the average medical costs for hospitalizations for smokers and non-smokers.
-
 ## Results
 
-results section with data summary table and at least 2 figures.
+There were a total of 5,000 patient encounters that met the inclusion criteria. There were 508 smokers (10.2%) out of the patient population with a mean hospitalization cost of \$10,245.02 as seen in Table 1. This was significantly different from the mean hospitalization cost of \$9,607.50 for non-smokers. There was also a significant difference of pre-existing cardiac disease between smokers and non-smokers (15.2% vs 2.5%). There was no statistical difference in age and gender between smokers and non-smokers.
 
 ```{r}
+#| tbl-cap: Patient Characteristics stratified by smoking status
+
 # Define the variables to include in the table
 vars <- c("age", "cost", "female", "cardiac")
 
@@ -67,74 +84,72 @@ catVars <- c("female", "cardiac")
 
 # Create the table
 table <- CreateTableOne(vars = vars, strata = "smoke", data = data, factorVars = catVars)
-
-# Print the table
-print(table, quote = FALSE, noSpaces = TRUE)
-
 ```
 
-The regression model provides coefficients that help us understand the relationship between smoking and medical costs while accounting for gender, age, and cardiac events.
+|                                             | Smoker               | Non-Smoker         | p-value |
+|---------------------------------------------|----------------------|--------------------|---------|
+| Patient Encounters (n)                      | 508                  | 4492               |         |
+| Mean Age (SD)                               | 41.42 (13.82)        | 41.48 (13.52)      | 0.926   |
+| Mean Total Hospitalization Cost in USD (SD) | \$10,245.02 (371.31) | \$9607.50 (351.54) | \<0.001 |
+| Female Gender (%)                           | 233 (45.9)           | 2202 (49.0)        | 0.193   |
+| History of Cardiac Disease (%)              | 77 (15.2)            | 113 (2.5)          | \<0.001 |
+
+Table 1: Patient Characteristics stratified by smoking status
+
+There was a wide distribution of total hospitalization costs in general with outliers in both groups. When stratified by smokers vs non-smokers, Figure 1 illustrates that the distribution of hospitalization costs were significant between the two groups. There was
 
 ```{r}
-#| include: false
+#| fig-cap: "Medical Costs by Smoking Status"
+#| fig-width: 4
+#| fig-height: 3
 
+ggplot(data, aes(x = smoke, y = cost)) +   
+  geom_boxplot() +   
+  labs(x= "Smoking Status",
+       y = "Hospitalization Cost (USD)") +   
+  theme_minimal() 
+```
+
+When examining the relationship between costs and age, there was a notable trend of increasing hospitalization costs as age increases. This was evident in both the smoker and non-smoker groups as demonstrated in Figure 2.
+
+```{r}
+#| fig-cap: "Age vs Hospitalizatiton Costs by Smoking Status"
+#| fig-width: 8
+#| fig-height: 4.5
+
+ggplot(data, aes(x = age, y = cost, color = as.factor(smoke))) +   
+  geom_point() +  
+  labs(x = "Age",        
+       y = "Hospitalization Cost (USD)",        
+       color = "Smoking Status") +   
+  theme_minimal() +
+  theme(legend.position.inside = c(0.95, 0.05), 
+        legend.justification = c("right", "bottom"))
+```
+
+The regression model shows that smoking status is a significant predictor of total hospitalization costs. Specifically, smokers incur higher costs by approximately \$592.76 compared to non-smokers, when holding other factors constant. Our addiitional co-variates of age, gender, and history of cardiac disease were all significant predictors that affect hospitalization costs. However, being a smoker had the highest effect in increased cost when compared to all other variables.
+
+```{r}
 # Linear regression model
 model <- lm(cost ~ smoke + female + age + cardiac, data = data)
 
 # Display the regression results as a table
 stargazer(model, type = "text",
           title = "Regression Analysis Results",
-          dep.var.labels = "Medical Costs",
-          covariate.labels = c("Smoking Status (1 = Smoker)", "Gender (1 = Female)", "Age", "Cardiac Event (1 = Yes)"))
-```
-
-This boxplot shows the distribution of medical costs for smokers and non-smokers, indicating if there are differences in costs between these groups.
-
-```{r}
-ggplot(data, aes(x = as.factor(smoke), y = cost)) +
-  geom_boxplot() +
-  labs(title = "Medical Costs by Smoking Status",
-       x = "Smoking Status",
-       y = "Medical Cost") +
-  theme_minimal()
-
-```
-
-This scatter plot shows the relationship between age and medical costs, with different colors representing smokers and non-smokers.
-
-```{r}
-ggplot(data, aes(x = age, y = cost, color = as.factor(smoke))) +
-  geom_point(alpha = 0.7) +
-  labs(title = "Age vs Medical Costs Colored by Smoking Status",
-       x = "Age",
-       y = "Medical Cost",
-       color = "Smoking Status") +
-  theme_minimal()
-
+          dep.var.labels = "Hospitalization Costs",
+          covariate.labels = c("Smoking Status (1 = Smoker)", "Gender (1 = Female)", "Age", "Cardiac History (1 = Yes)"),
+          table.layout = "d-#tn",
+          flip = TRUE)
 ```
 
 ## Discussion
 
-4-6 pages total
+Our findings reveal significant differences in total hospitalization costs between smokers and non-smokers, with smokers incurring higher costs. This finding is consistent with existing literature, which demonstrates that smokers have higher healthcare utilization such as more intensive or prolonged medial care secondary to developing smoking-related diseases.
 
-The results from the summary table, regression analysis, and visualizations provide insights into the relationship between smoking and medical costs for hospitalizations.
+The regression model indicates that being a smoker increases total hospitalization costs on average of \$592.76. This result aligns with prior studies that have shown smokers have increased incidences of lung cancer, heart disease and respiratory illnesses. These co-morbidities are likely to result in hospital complications or prolonged recovery from illnesses that cause higher hospitalization costs.
 
-### Key Findings
+Age is another critical factor that impacts hospitalization costs. The positive relationship between age and costs suggests that older individuals are likely to incur higher medical expenses. This trend can be explained by the natural increase in health problems with aging, leading to greater healthcare utilization. The presence of cardiac conditions also significantly raises hospitalization costs, reflecting the high cost of treating cardiovascular diseases, which are prevalent among smokers. Additionally, females incur lower hospitalization costs compared to males, which is likely due to various factors related to gender-specific health trends.
 
--   **Average Costs**: The summary table shows whether smokers have higher average medical costs compared to non-smokers.
+A limitation in this study includes a limited data set from a single hospital system and findings may not be generalizable to the broader population. We also did not account for additional variables that could be confounders such as insurance type.
 
--   **Regression Analysis**: The regression model helps us understand the impact of smoking on medical costs while controlling for other factors. Significant coefficients for the `smoke` variable would suggest that smoking status is a predictor of higher medical costs.
-
--   **Visualizations**: The boxplot and scatter plot visually reinforce the findings from the summary table and regression analysis. The boxplot helps compare the distribution of costs between smokers and non-smokers, while the scatter plot illustrates the relationship between age and medical costs, highlighting differences by smoking status.
-
-### Implications
-
-Understanding the financial burden of smoking on healthcare systems can inform public health policies and smoking cessation programs. If smoking is associated with higher medical costs, this further justifies the need for effective interventions to reduce smoking prevalence.
-
-### Limitations
-
--   The dataset is limited to a specific cohort and may not be generalizable to the broader population.
-
--   The analysis is observational and cannot establish causality.
-
-In this report, we analyzed whether smokers have higher medical costs for hospitalizations compared to non-smokers. The analysis included a summary table, a regression model, and visualizations to understand the impact of smoking on medical costs, considering other covariates like gender, age, and cardiac events. The findings highlight the potential financial burden of smoking on healthcare systems.
+Overall, these findings reveal the significant economic burden of smoking on healthare systems and have important implications for public health policies. This study reinforces the need for robust smoking cessation programs to help curb costs. Policymakers should focus their efforts on effective interventions to reduce smoking prevalence because this could lead to cost savings.
